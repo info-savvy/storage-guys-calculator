@@ -259,76 +259,83 @@
     }
 
     function calculateEstimate() {
-      const cat = document.getElementById('categorySelect').value;
-      const cardTitle = document.getElementById('recTitle');
-      const cardVol = document.getElementById('recVol');
-      const cardPrice = document.getElementById('recPrice');
-      const cardBadge = document.getElementById('badgeOffer');
+  const cat = document.getElementById('categorySelect').value;
+  const cardTitle = document.getElementById('recTitle');
+  const cardVol = document.getElementById('recVol');
+  const cardPrice = document.getElementById('recPrice');
+  const cardBadge = document.getElementById('badgeOffer');
 
-      if (cat === 'Self-Storage') {
-        let totalVol = 0;
-        document.querySelectorAll('.inv-item').forEach(item => {
-          const qty = parseFloat(item.value) || 0;
-          const weight = parseFloat(item.getAttribute('data-vol'));
-          totalVol += qty * weight;
-        });
+  if (cat === 'Self-Storage') {
+    let totalVol = 0;
+    document.querySelectorAll('.inv-item').forEach(item => {
+      const qty = parseFloat(item.value) || 0;
+      const weight = parseFloat(item.getAttribute('data-vol'));
+      totalVol += qty * weight;
+    });
 
-        // Add 25% realistic packing buffer
-        totalVol = totalVol * 1.25;
-        cardVol.innerText = `Calculated Usable Space (incl. 25% buffer): ~${totalVol.toFixed(1)} m³`;
+    // Apply 25% packing buffer factor
+    totalVol = totalVol * 1.25;
+    cardVol.innerText = `Calculated Usable Space (incl. 25% buffer): ~${totalVol.toFixed(1)} m³`;
 
-        if (totalVol <= 9.0) {
-          cardTitle.innerText = "1 Vault (9 m³ Container)";
-          cardPrice.innerText = "R749 / month";
-          cardBadge.style.display = "none";
-        } else if (totalVol <= 18.0) {
-          cardTitle.innerText = "2 Vaults (18 m³ Containers)";
-          cardPrice.innerText = "R1,400 / month";
-          cardBadge.innerText = "BEST OFFER (Save R98)";
-          cardBadge.style.display = "block";
-        } else if (totalVol <= 27.0) {
-          cardTitle.innerText = "3 Vaults (27 m³ Containers)";
-          cardPrice.innerText = "R1,935 / month";
-          cardBadge.innerText = "BEST OFFER (Save R312)";
-          cardBadge.style.display = "block";
-        } else if (totalVol <= 30.2) {
-          cardTitle.innerText = "Medium Storage Unit (approx. 9 - 12.6 m²)";
-          cardPrice.innerText = "from R950 - R1,200 / month";
-          cardBadge.style.display = "none";
-        } else if (totalVol <= 43.2) {
-          cardTitle.innerText = "Large Storage Unit (approx. 15 - 18 m²)";
-          cardPrice.innerText = "from R1,275 - R1,495 / month";
-          cardBadge.style.display = "none";
-        } else {
-          cardTitle.innerText = "Warehouse Storage Bay (4m x 6m)";
-          cardPrice.innerText = "R1,950 / month";
-          cardBadge.style.display = "none";
-        }
-
-      } else if (cat === 'Vehicle or Boat Storage') {
-        const len = parseFloat(document.getElementById('vehLength').value) || 0;
-        const cover = document.getElementById('vehCover').value;
-        cardVol.innerText = `Vehicle Clearance Length: ${len}m (${cover === 'Yes' ? 'Undercover' : 'Open Bay'})`;
-        cardBadge.style.display = "none";
-
-        if (len <= 5.5 && cover === 'No') {
-          cardTitle.innerText = "Open Vehicle Bay";
-          cardPrice.innerText = "R650 / month";
-        } else if (len <= 5.5 && cover === 'Yes') {
-          cardTitle.innerText = "Undercover Vehicle Bay / Single Garage";
-          cardPrice.innerText = "R1,275 / month";
-        } else {
-          cardTitle.innerText = "Warehouse Bay (Large Vehicle / Boat)";
-          cardPrice.innerText = "R1,950 / month";
-        }
-
-      } else if (cat === 'Warehouse Storage') {
-        cardTitle.innerText = "Business Warehouse Bay (4m x 6m)";
-        cardVol.innerText = "Commercial Floor Area: 24 m²";
-        cardPrice.innerText = "R1,950 / month";
-        cardBadge.style.display = "none";
+    // 1. VAULT (Up to 9 m³)
+    if (totalVol <= 9.0) {
+      cardTitle.innerText = "Vault (9 m³ Container)";
+      cardPrice.innerText = "R749 / month";
+      cardBadge.style.display = "none";
+    } 
+    // 2. MEDIUM UNIT (9.1 m³ to 31.5 m³)
+    else if (totalVol <= 31.5) {
+      cardTitle.innerText = "Medium Unit (9 m² - 12.6 m²)";
+      if (totalVol <= 22.5) {
+        cardPrice.innerText = "from R950 / month";
+      } else if (totalVol <= 26.25) {
+        cardPrice.innerText = "R1,150 / month (10.5 m²)";
+      } else {
+        cardPrice.innerText = "R1,200 / month (12.6 m²)";
       }
+      cardBadge.style.display = "none";
+    } 
+    // 3. LARGE UNIT (31.6 m³ to 45 m³)
+    else if (totalVol <= 45.0) {
+      cardTitle.innerText = "Large Unit (15 m² - 18 m²)";
+      if (totalVol <= 37.5) {
+        cardPrice.innerText = "from R1,275 / month (15 m²)";
+      } else {
+        cardPrice.innerText = "R1,495 / month (18 m²)";
+      }
+      cardBadge.style.display = "none";
+    } 
+    // 4. WAREHOUSE BAY (> 45 m³)
+    else {
+      cardTitle.innerText = "Warehouse Bay (4m x 6m)";
+      cardPrice.innerText = "R1,950 / month";
+      cardBadge.style.display = "none";
     }
+
+  } else if (cat === 'Vehicle or Boat Storage') {
+    const len = parseFloat(document.getElementById('vehLength').value) || 0;
+    const cover = document.getElementById('vehCover').value;
+    cardVol.innerText = `Vehicle Clearance Length: ${len}m (${cover === 'Yes' ? 'Undercover' : 'Open Bay'})`;
+    cardBadge.style.display = "none";
+
+    if (len <= 5.5 && cover === 'No') {
+      cardTitle.innerText = "Open Vehicle Bay";
+      cardPrice.innerText = "R650 / month";
+    } else if (len <= 5.5 && cover === 'Yes') {
+      cardTitle.innerText = "Undercover Vehicle Bay / Single Garage";
+      cardPrice.innerText = "R1,275 / month";
+    } else {
+      cardTitle.innerText = "Warehouse Bay (Large Vehicle / Boat)";
+      cardPrice.innerText = "R1,950 / month";
+    }
+
+  } else if (cat === 'Warehouse Storage') {
+    cardTitle.innerText = "Business Warehouse Bay (4m x 6m)";
+    cardVol.innerText = "Commercial Floor Area: 24 m²";
+    cardPrice.innerText = "R1,950 / month";
+    cardBadge.style.display = "none";
+  }
+}
 
     // Initialize state on render
     renderCategoryFields();
