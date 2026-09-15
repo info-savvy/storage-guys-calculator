@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Storage Guys - Smart Estimator Prototype</title>
+  <style>
+    :root {
+      --primary: #0052cc;
+      --primary-hover: #003d99;
+      --secondary: #28a745;
+      --accent: #ff9900;
+      --dark: #172b4d;
+      --light-bg: #f4f5f7;
+      --border: #dfe1e6;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; }
+    body { background-color: var(--light-bg); color: var(--dark); line-height: 1.5; }
+
+    /* --- HERO SECTION --- */
+    .hero {
+      background: linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1350&q=80') center/cover;
+      color: white; padding: 80px 20px; text-align: center;
+    }
+    .hero h1 { font-size: 2.5rem; margin-bottom: 15px; }
+    .hero p { font-size: 1.25rem; margin-bottom: 30px; opacity: 0.9; }
+    .hero-cta-group { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+
+    .btn {
+      padding: 14px 28px; font-size: 1rem; font-weight: bold; border-radius: var(--radius);
+      border: none; cursor: pointer; text-decoration: none; display: inline-block; transition: all 0.2s;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: var(--secondary); color: white; }
+    .btn-secondary:hover { background: #218838; }
+
+    /* --- PERSONA GATEWAY --- */
+    .section-container { max-width: 1100px; margin: 50px auto; padding: 0 20px; }
+    .section-title { text-align: center; margin-bottom: 30px; }
+    
+    .persona-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .persona-card {
+      background: white; border-radius: var(--radius); padding: 25px; border: 1px solid var(--border);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; cursor: pointer; transition: transform 0.2s;
+    }
+    .persona-card:hover { transform: translateY(-4px); border-color: var(--primary); }
+    .persona-card h3 { margin-bottom: 10px; color: var(--primary); }
+    .persona-card p { font-size: 0.95rem; color: #5e6c84; margin-bottom: 15px; }
+
+    /* --- ESTIMATOR FORM --- */
+    .estimator-box {
+      background: white; border-radius: var(--radius); padding: 30px; border: 1px solid var(--border);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08); margin-top: 40px;
+    }
+    .step-header { background: #ebecf0; padding: 10px 15px; font-weight: bold; border-radius: 4px; margin: 25px 0 15px 0; }
+    .step-header:first-of-type { margin-top: 0; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .form-group { display: flex; flex-direction: column; }
+    .form-group.full-width { grid-column: span 2; }
+    .form-group label { font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; }
+    .form-group input, .form-group select {
+      padding: 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem;
+    }
+
+    .inventory-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+
+    /* --- LIVE ESTIMATION CARD --- */
+    .estimation-card {
+      background: #e6fcff; border: 2px solid #00b8d9; border-radius: var(--radius);
+      padding: 20px; text-align: center; margin: 25px 0; position: relative;
+    }
+    .badge-offer {
+      position: absolute; top: -12px; right: 20px; background: var(--accent); color: white;
+      padding: 4px 12px; font-weight: bold; font-size: 0.75rem; border-radius: 20px; text-transform: uppercase;
+    }
+    .card-title { font-size: 1.4rem; font-weight: bold; color: var(--dark); margin-bottom: 5px; }
+    .card-price { font-size: 1.8rem; color: var(--primary); font-weight: 800; }
+    .card-perks { color: var(--secondary); font-weight: bold; font-size: 0.9rem; margin-top: 5px; }
+
+    @media (max-width: 768px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-group.full-width { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HERO SECTION -->
+  <section class="hero">
+    <h1>Secure Storage. We Move You for Free.</h1>
+    <p>Free collection in Cape Town for rentals of 3+ months.</p>
+    <div class="hero-cta-group">
+      <a href="#estimator" class="btn btn-primary">Estimate My Space</a>
+      <a href="#booking-portal" onclick="alert('Redirecting straight to Secure Rental Agreement & Payment Portal...')" class="btn btn-secondary">Book Online</a>
+    </div>
+  </section>
+
+  <!-- PERSONA GATEWAY -->
+  <div class="section-container">
+    <div class="section-title">
+      <h2>Select Your Storage Need</h2>
+      <p>Self-segment to find the best package instantly.</p>
+    </div>
+    <div class="persona-grid">
+      <div class="persona-card" onclick="setCategory('Self-Storage')">
+        <h3>Moving House?</h3>
+        <p>Household storage with free collection for 3+ month rentals.</p>
+        <strong style="color:var(--primary)">View Sizing Guide &rarr;</strong>
+      </div>
+      <div class="persona-card" onclick="setCategory('Vehicle or Boat Storage')">
+        <h3>Boat or Vehicle?</h3>
+        <p>Open or undercover secure space options with simple length clearance.</p>
+        <strong style="color:var(--primary)">Check Clearances &rarr;</strong>
+      </div>
+      <div class="persona-card" onclick="setCategory('Warehouse Storage')">
+        <h3>Business Stock?</h3>
+        <p>Large volume floor space designed for high-turnover inventory.</p>
+        <strong style="color:var(--primary)">Warehouse Solutions &rarr;</strong>
+      </div>
+    </div>
+
+    <!-- ESTIMATOR FORM ENGINE -->
+    <div class="estimator-box" id="estimator">
+      <h2 style="margin-bottom: 10px;">The Smart Estimator</h2>
+      <p style="color: #5e6c84; font-size: 0.95rem;">Fill in your details and inventory below to receive a live sizing quote.</p>
+
+      <form id="storageForm" onsubmit="event.preventDefault(); alert('Lead Submitted! Proceeding to booking option...');">
+        
+        <!-- STEP 1 -->
+        <div class="step-header">Step 1: Contact Details</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>First Name *</label>
+            <input type="text" required placeholder="Maria">
+          </div>
+          <div class="form-group">
+            <label>Last Name *</label>
+            <input type="text" required placeholder="Van Der Merwe">
+          </div>
+          <div class="form-group">
+            <label>Email Address *</label>
+            <input type="email" required placeholder="maria@example.co.za">
+          </div>
+          <div class="form-group">
+            <label>Contact Number *</label>
+            <input type="tel" required placeholder="082 123 4567">
+          </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="step-header">Step 2: Category Selection</div>
+        <div class="form-group full-width">
+          <label>What kind of storage suits your needs?</label>
+          <select id="categorySelect" onchange="renderCategoryFields()">
+            <option value="Self-Storage">Self-Storage (Household & Personal)</option>
+            <option value="Vehicle or Boat Storage">Vehicle or Boat Storage</option>
+            <option value="Warehouse Storage">Business / Warehouse Storage</option>
+          </select>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step-header">Step 3: Inventory Input</div>
+        
+        <!-- Self-Storage Input Panel -->
+        <div id="selfStoragePanel" class="inventory-grid">
+          <div class="form-group">
+            <label>Queen / King Bed</label>
+            <input type="number" class="inv-item" data-vol="1.8" min="0" value="0" oninput="calculateEstimate()">
+          </div>
+          <div class="form-group">
+            <label>Single / Double Bed</label>
+            <input type="number" class="inv-item" data-vol="1.2" min="0" value="0" oninput="calculateEstimate()">
+          </div>
+          <div class="form-group">
+            <label>Lounge Suite (Seats)</label>
+            <input type="number" class="inv-item" data-vol="0.6" min="0" value="0" oninput="calculateEstimate()">
+          </div>
+          <div class="form-group">
+            <label>Fridge / Freezer</label>
+            <input type="number" class="inv-item" data-vol="0.8" min="0" value="0" oninput="calculateEstimate()">
+          </div>
+          <div class="form-group">
+            <label>Washing Machine</label>
+            <input type="number" class="inv-item" data-vol="0.5" min="0" value="0" oninput="calculateEstimate()">
+          </div>
+          <div class="form-group">
+            <label>Dining Table</label>
+            <input type="number" class="inv-item" data-vol="1.0" min="0" value="0" oninput="calculateEstimate()">
+          </div>
+          <div class="form-group">
+            <label>Boxes (Moving Standard)</label>
+            <input type="number" class="inv-item" data-vol="0.1" min="0" value="0" oninput="calculateEstimate()">
+          </div>
+        </div>
+
+        <!-- Vehicle Input Panel -->
+        <div id="vehiclePanel" class="form-grid" style="display: none;">
+          <div class="form-group">
+            <label>Approx. Length (meters)</label>
+            <input type="number" id="vehLength" step="0.5" min="1" value="5" oninput="calculateEstimate()">
+          </div>
+          <div class="form-group">
+            <label>Undercover Required?</label>
+            <select id="vehCover" onchange="calculateEstimate()">
+              <option value="Yes">Yes (Undercover Bay / Garage)</option>
+              <option value="No">No (Open Parking Bay)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Warehouse Input Panel -->
+        <div id="warehousePanel" style="display: none;">
+          <p style="color:#5e6c84; font-size: 0.95rem;">Warehouse units start at 4m x 6m (24 m² floor area). Recommended for business pallet storage and commercial inventory.</p>
+        </div>
+
+        <!-- STEP 4 -->
+        <div class="step-header">Step 4: Live Recommendation & Commitment</div>
+        
+        <!-- Dynamic Output Display -->
+        <div class="estimation-card" id="outputCard">
+          <div class="badge-offer" id="badgeOffer" style="display: none;">Best Offer Bundle</div>
+          <div class="card-title" id="recTitle">1 Vault (9 m³ Container)</div>
+          <div style="font-size: 0.9rem; color: #5e6c84;" id="recVol">Calculated Usable Space: ~0 m³</div>
+          <div class="card-price" id="recPrice">R749 / mo</div>
+          <div class="card-perks" id="recPerk">✓ Includes FREE Collection in Cape Town (Rentals 3+ Months)</div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Preferred Move-in Date *</label>
+            <input type="date" required>
+          </div>
+          <div class="form-group" style="justify-content: flex-end;">
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Submit & Lock In Quote</button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function setCategory(catName) {
+      document.getElementById('categorySelect').value = catName;
+      renderCategoryFields();
+      document.getElementById('estimator').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function renderCategoryFields() {
+      const cat = document.getElementById('categorySelect').value;
+      document.getElementById('selfStoragePanel').style.display = (cat === 'Self-Storage') ? 'grid' : 'none';
+      document.getElementById('vehiclePanel').style.display = (cat === 'Vehicle or Boat Storage') ? 'grid' : 'none';
+      document.getElementById('warehousePanel').style.display = (cat === 'Warehouse Storage') ? 'block' : 'none';
+      calculateEstimate();
+    }
+
+    function calculateEstimate() {
+      const cat = document.getElementById('categorySelect').value;
+      const cardTitle = document.getElementById('recTitle');
+      const cardVol = document.getElementById('recVol');
+      const cardPrice = document.getElementById('recPrice');
+      const cardBadge = document.getElementById('badgeOffer');
+
+      if (cat === 'Self-Storage') {
+        let totalVol = 0;
+        document.querySelectorAll('.inv-item').forEach(item => {
+          const qty = parseFloat(item.value) || 0;
+          const weight = parseFloat(item.getAttribute('data-vol'));
+          totalVol += qty * weight;
+        });
+
+        // Add 25% realistic packing buffer
+        totalVol = totalVol * 1.25;
+        cardVol.innerText = `Calculated Usable Space (incl. 25% buffer): ~${totalVol.toFixed(1)} m³`;
+
+        if (totalVol <= 9.0) {
+          cardTitle.innerText = "1 Vault (9 m³ Container)";
+          cardPrice.innerText = "R749 / month";
+          cardBadge.style.display = "none";
+        } else if (totalVol <= 18.0) {
+          cardTitle.innerText = "2 Vaults (18 m³ Containers)";
+          cardPrice.innerText = "R1,400 / month";
+          cardBadge.innerText = "BEST OFFER (Save R98)";
+          cardBadge.style.display = "block";
+        } else if (totalVol <= 27.0) {
+          cardTitle.innerText = "3 Vaults (27 m³ Containers)";
+          cardPrice.innerText = "R1,935 / month";
+          cardBadge.innerText = "BEST OFFER (Save R312)";
+          cardBadge.style.display = "block";
+        } else if (totalVol <= 30.2) {
+          cardTitle.innerText = "Medium Storage Unit (approx. 9 - 12.6 m²)";
+          cardPrice.innerText = "from R950 - R1,200 / month";
+          cardBadge.style.display = "none";
+        } else if (totalVol <= 43.2) {
+          cardTitle.innerText = "Large Storage Unit (approx. 15 - 18 m²)";
+          cardPrice.innerText = "from R1,275 - R1,495 / month";
+          cardBadge.style.display = "none";
+        } else {
+          cardTitle.innerText = "Warehouse Storage Bay (4m x 6m)";
+          cardPrice.innerText = "R1,950 / month";
+          cardBadge.style.display = "none";
+        }
+
+      } else if (cat === 'Vehicle or Boat Storage') {
+        const len = parseFloat(document.getElementById('vehLength').value) || 0;
+        const cover = document.getElementById('vehCover').value;
+        cardVol.innerText = `Vehicle Clearance Length: ${len}m (${cover === 'Yes' ? 'Undercover' : 'Open Bay'})`;
+        cardBadge.style.display = "none";
+
+        if (len <= 5.5 && cover === 'No') {
+          cardTitle.innerText = "Open Vehicle Bay";
+          cardPrice.innerText = "R650 / month";
+        } else if (len <= 5.5 && cover === 'Yes') {
+          cardTitle.innerText = "Undercover Vehicle Bay / Single Garage";
+          cardPrice.innerText = "R1,275 / month";
+        } else {
+          cardTitle.innerText = "Warehouse Bay (Large Vehicle / Boat)";
+          cardPrice.innerText = "R1,950 / month";
+        }
+
+      } else if (cat === 'Warehouse Storage') {
+        cardTitle.innerText = "Business Warehouse Bay (4m x 6m)";
+        cardVol.innerText = "Commercial Floor Area: 24 m²";
+        cardPrice.innerText = "R1,950 / month";
+        cardBadge.style.display = "none";
+      }
+    }
+
+    // Initialize state on render
+    renderCategoryFields();
+  </script>
+</body>
+</html>
