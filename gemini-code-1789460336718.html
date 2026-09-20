@@ -40,7 +40,7 @@
     /* --- PERSONA GATEWAY --- */
     .section-container { max-width: 1100px; margin: 50px auto; padding: 0 20px; }
     .section-title { text-align: center; margin-bottom: 30px; }
-    
+
     .persona-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
     .persona-card {
       background: white; border-radius: var(--radius); padding: 25px; border: 1px solid var(--border);
@@ -129,7 +129,7 @@
       <p style="color: #5e6c84; font-size: 0.95rem;">Fill in your details and inventory below to receive a live sizing quote.</p>
 
       <form id="storageForm" onsubmit="event.preventDefault(); alert('Lead Submitted! Proceeding to booking option...');">
-        
+
         <!-- STEP 1 -->
         <div class="step-header">Step 1: Contact Details</div>
         <div class="form-grid">
@@ -164,7 +164,7 @@
 
         <!-- STEP 3 -->
         <div class="step-header">Step 3: Inventory Input</div>
-        
+
         <!-- Self-Storage Input Panel -->
         <div id="selfStoragePanel" class="inventory-grid">
           <div class="form-group">
@@ -214,12 +214,12 @@
 
         <!-- Warehouse Input Panel -->
         <div id="warehousePanel" style="display: none;">
-          <p style="color:#5e6c84; font-size: 0.95rem;">Warehouse units start at 4m x 6m (24 m² floor area). Recommended for business pallet storage and commercial inventory.</p>
+          <p style="color:#5e6c84; font-size: 0.95rem;">Warehouse units start at 4m x 6m (24 m²) floor area. Recommended for business pallet storage and commercial inventory.</p>
         </div>
 
         <!-- STEP 4 -->
         <div class="step-header">Step 4: Live Recommendation & Commitment</div>
-        
+
         <!-- Dynamic Output Display -->
         <div class="estimation-card" id="outputCard">
           <div class="badge-offer" id="badgeOffer" style="display: none;">Best Offer Bundle</div>
@@ -244,6 +244,54 @@
   </div>
 
   <script>
+    // ============================================================
+    // BR-01 FIX (Business Rules Matrix, Storage Guys Estimator doc)
+    // ------------------------------------------------------------
+    // The old code compared item volume (m³) against hardcoded
+    // "magic number" thresholds (22.5, 26.25, 31.5, 37.5, 45) with
+    // no explanation of where they came from. They turned out to
+    // already be floor-area x 2.5m — this version makes that
+    // assumption an explicit, named constant instead of an
+    // invisible one, so it can be reviewed and signed off rather
+    // than trusted by accident.
+    //
+    // STILL NEEDS STORAGE GUYS SIGN-OFF (see the doc's checklist):
+    //   1. Is 2.5m the correct usable ceiling height for Medium/
+    //      Large units?
+    //   2. Vault is marketed as "9 cubic metres" but its own
+    //      diagram dimensions (1.6m x 2.2m x 2.2m) work out to
+    //      ~7.74 m³ — which figure should the calculator trust?
+    //      (Currently using the marketed 9 m³.)
+    //   3. The 25% packing buffer below (BR-04) is still an
+    //      assumption too, not a confirmed Storage Guys policy.
+    // ============================================================
+
+    const CEILING_HEIGHT_M = 2.5;  // ASSUMPTION — confirm with Storage Guys ops
+    const PACKING_BUFFER = 1.25;   // 25% packing buffer — ASSUMPTION, confirm with ops
+
+    // Self-storage tiers, smallest to largest.
+    // Vault is priced/sized by volume directly (Storage Guys' stated 9 m³).
+    // Medium/Large are priced by floor area on the rate sheet, so their
+    // volume capacity is derived below as floorAreaM2 * CEILING_HEIGHT_M,
+    // instead of being a separate, undocumented number.
+    const SELF_STORAGE_TIERS = [
+      { label: "Vault (9 m³ Container)",     volumeM3: 9,                      price: "R749 / month" },
+      { label: "Medium Unit (9 m² approx.)", floorAreaM2: 9,                   price: "from R950 / month" },
+      { label: "Medium Unit (10.5 m²)",      floorAreaM2: 10.5,                price: "R1,150 / month (10.5 m²)" },
+      { label: "Medium Unit (12.6 m²)",      floorAreaM2: 12.6,                price: "R1,200 / month (12.6 m²)" },
+      { label: "Large Unit (15 m²)",         floorAreaM2: 15,                  price: "from R1,275 / month (15 m²)" },
+      { label: "Large Unit (18 m²)",         floorAreaM2: 18,                  price: "R1,495 / month (18 m²)" },
+    ];
+
+    // Fill in each tier's volume capacity once at load time, so every
+    // threshold used by calculateEstimate() traces back to this table
+    // instead of being retyped as a bare number.
+    SELF_STORAGE_TIERS.forEach(tier => {
+      if (tier.volumeM3 === undefined) {
+        tier.volumeM3 = tier.floorAreaM2 * CEILING_HEIGHT_M;
+      }
+    });
+
     function setCategory(catName) {
       document.getElementById('categorySelect').value = catName;
       renderCategoryFields();
@@ -259,83 +307,62 @@
     }
 
     function calculateEstimate() {
-  const cat = document.getElementById('categorySelect').value;
-  const cardTitle = document.getElementById('recTitle');
-  const cardVol = document.getElementById('recVol');
-  const cardPrice = document.getElementById('recPrice');
-  const cardBadge = document.getElementById('badgeOffer');
+      const cat = document.getElementById('categorySelect').value;
+      const cardTitle = document.getElementById('recTitle');
+      const cardVol = document.getElementById('recVol');
+      const cardPrice = document.getElementById('recPrice');
+      const cardBadge = document.getElementById('badgeOffer');
 
-  if (cat === 'Self-Storage') {
-    let totalVol = 0;
-    document.querySelectorAll('.inv-item').forEach(item => {
-      const qty = parseFloat(item.value) || 0;
-      const weight = parseFloat(item.getAttribute('data-vol'));
-      totalVol += qty * weight;
-    });
+      if (cat === 'Self-Storage') {
+        let totalVol = 0;
+        document.querySelectorAll('.inv-item').forEach(item => {
+          const qty = parseFloat(item.value) || 0;
+          const itemVolume = parseFloat(item.getAttribute('data-vol'));
+          totalVol += qty * itemVolume;
+        });
 
-    // Apply 25% packing buffer factor
-    totalVol = totalVol * 1.25;
-    cardVol.innerText = `Calculated Usable Space (incl. 25% buffer): ~${totalVol.toFixed(1)} m³`;
+        // 25% packing buffer (BR-04 — assumption, confirm with ops)
+        totalVol = totalVol * PACKING_BUFFER;
+        cardVol.innerText = `Calculated Usable Space (incl. 25% buffer): ~${totalVol.toFixed(1)} m³`;
+        cardBadge.style.display = "none";
 
-    // 1. VAULT (Up to 9 m³)
-    if (totalVol <= 9.0) {
-      cardTitle.innerText = "Vault (9 m³ Container)";
-      cardPrice.innerText = "R749 / month";
-      cardBadge.style.display = "none";
-    } 
-    // 2. MEDIUM UNIT (9.1 m³ to 31.5 m³)
-    else if (totalVol <= 31.5) {
-      cardTitle.innerText = "Medium Unit (9 m² - 12.6 m²)";
-      if (totalVol <= 22.5) {
-        cardPrice.innerText = "from R950 / month";
-      } else if (totalVol <= 26.25) {
-        cardPrice.innerText = "R1,150 / month (10.5 m²)";
-      } else {
-        cardPrice.innerText = "R1,200 / month (12.6 m²)";
+        // Walk the tiers smallest-first; recommend the first one the
+        // buffered volume fits inside.
+        const matchedTier = SELF_STORAGE_TIERS.find(tier => totalVol <= tier.volumeM3);
+
+        if (matchedTier) {
+          cardTitle.innerText = matchedTier.label;
+          cardPrice.innerText = matchedTier.price;
+        } else {
+          // Nothing fit — recommend the Warehouse Bay.
+          cardTitle.innerText = "Warehouse Bay (4m x 6m)";
+          cardPrice.innerText = "R1,950 / month";
+        }
+
+      } else if (cat === 'Vehicle or Boat Storage') {
+        const len = parseFloat(document.getElementById('vehLength').value) || 0;
+        const cover = document.getElementById('vehCover').value;
+        cardVol.innerText = `Vehicle Clearance Length: ${len}m (${cover === 'Yes' ? 'Undercover' : 'Open Bay'})`;
+        cardBadge.style.display = "none";
+
+        if (len <= 5.5 && cover === 'No') {
+          cardTitle.innerText = "Open Vehicle Bay";
+          cardPrice.innerText = "R650 / month";
+        } else if (len <= 5.5 && cover === 'Yes') {
+          cardTitle.innerText = "Undercover Vehicle Bay / Single Garage";
+          cardPrice.innerText = "R1,275 / month";
+        } else {
+          cardTitle.innerText = "Warehouse Bay (Large Vehicle / Boat)";
+          cardPrice.innerText = "R1,950 / month";
+        }
+
+      } else if (cat === 'Warehouse Storage') {
+        cardTitle.innerText = "Business Warehouse Bay (4m x 6m)";
+        cardVol.innerText = "Commercial Floor Area: 24 m²";
+        cardPrice.innerText = "R1,950 / month";
+        cardBadge.style.display = "none";
       }
-      cardBadge.style.display = "none";
-    } 
-    // 3. LARGE UNIT (31.6 m³ to 45 m³)
-    else if (totalVol <= 45.0) {
-      cardTitle.innerText = "Large Unit (15 m² - 18 m²)";
-      if (totalVol <= 37.5) {
-        cardPrice.innerText = "from R1,275 / month (15 m²)";
-      } else {
-        cardPrice.innerText = "R1,495 / month (18 m²)";
-      }
-      cardBadge.style.display = "none";
-    } 
-    // 4. WAREHOUSE BAY (> 45 m³)
-    else {
-      cardTitle.innerText = "Warehouse Bay (4m x 6m)";
-      cardPrice.innerText = "R1,950 / month";
-      cardBadge.style.display = "none";
     }
-
-  } else if (cat === 'Vehicle or Boat Storage') {
-    const len = parseFloat(document.getElementById('vehLength').value) || 0;
-    const cover = document.getElementById('vehCover').value;
-    cardVol.innerText = `Vehicle Clearance Length: ${len}m (${cover === 'Yes' ? 'Undercover' : 'Open Bay'})`;
-    cardBadge.style.display = "none";
-
-    if (len <= 5.5 && cover === 'No') {
-      cardTitle.innerText = "Open Vehicle Bay";
-      cardPrice.innerText = "R650 / month";
-    } else if (len <= 5.5 && cover === 'Yes') {
-      cardTitle.innerText = "Undercover Vehicle Bay / Single Garage";
-      cardPrice.innerText = "R1,275 / month";
-    } else {
-      cardTitle.innerText = "Warehouse Bay (Large Vehicle / Boat)";
-      cardPrice.innerText = "R1,950 / month";
-    }
-
-  } else if (cat === 'Warehouse Storage') {
-    cardTitle.innerText = "Business Warehouse Bay (4m x 6m)";
-    cardVol.innerText = "Commercial Floor Area: 24 m²";
-    cardPrice.innerText = "R1,950 / month";
-    cardBadge.style.display = "none";
-  }
-}
 
     // Initialize state on render
     renderCategoryFields();
