@@ -224,7 +224,7 @@
         <div class="estimation-card" id="outputCard">
           <div class="badge-offer" id="badgeOffer" style="display: none;">Best Offer Bundle</div>
           <div class="card-title" id="recTitle">1 Vault (9 m³ Container)</div>
-          <div style="font-size: 0.9rem; color: #5e6c84;" id="recVol">Calculated Usable Space: ~0 m³</div>
+          <div style="font-size: 0.9rem; color: #5e6c84;" id="recVol">This is an estimate only and may not be fully accurate. If anything looks off, please contact Storage Guys before booking.</div>
           <div class="card-price" id="recPrice">R749 / mo</div>
           <div class="card-perks" id="recPerk">✓ Includes FREE Collection in Cape Town (Rentals 3+ Months)</div>
         </div>
@@ -268,6 +268,12 @@
 
     const CEILING_HEIGHT_M = 2.5;  // ASSUMPTION — confirm with Storage Guys ops
     const PACKING_BUFFER = 1.25;   // 25% packing buffer — ASSUMPTION, confirm with ops
+
+    // Shown under every recommendation, all three categories, instead of the
+    // raw calculated figure — the sizing math still isn't signed off by
+    // Storage Guys ops, so we don't want visitors treating the number itself
+    // as guaranteed.
+    const DISCLAIMER_TEXT = "This is an estimate only and may not be fully accurate. If anything looks off, please contact Storage Guys before booking.";
 
     // Self-storage tiers, smallest to largest.
     // Vault is priced/sized by volume directly (Storage Guys' stated 9 m³).
@@ -323,7 +329,7 @@
 
         // 25% packing buffer (BR-04 — assumption, confirm with ops)
         totalVol = totalVol * PACKING_BUFFER;
-        cardVol.innerText = `Calculated Usable Space (incl. 25% buffer): ~${totalVol.toFixed(1)} m³`;
+        cardVol.innerText = DISCLAIMER_TEXT;
         cardBadge.style.display = "none";
 
         // Walk the tiers smallest-first; recommend the first one the
@@ -342,7 +348,7 @@
       } else if (cat === 'Vehicle or Boat Storage') {
         const len = parseFloat(document.getElementById('vehLength').value) || 0;
         const cover = document.getElementById('vehCover').value;
-        cardVol.innerText = `Vehicle Clearance Length: ${len}m (${cover === 'Yes' ? 'Undercover' : 'Open Bay'})`;
+        cardVol.innerText = DISCLAIMER_TEXT;
         cardBadge.style.display = "none";
 
         if (len <= 5.5 && cover === 'No') {
@@ -358,7 +364,7 @@
 
       } else if (cat === 'Warehouse Storage') {
         cardTitle.innerText = "Business Warehouse Bay (4m x 6m)";
-        cardVol.innerText = "Commercial Floor Area: 24 m²";
+        cardVol.innerText = DISCLAIMER_TEXT;
         cardPrice.innerText = "R1,950 / month";
         cardBadge.style.display = "none";
       }
